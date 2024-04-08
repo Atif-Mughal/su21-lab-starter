@@ -16,21 +16,22 @@
 #We have provided five versions of accumulator. Only one is correct, though all five pass the sanity test above.
 
 accumulatorone:
-	lw s0 0(a0)
-	beq s0 x0 Endone
-	addi sp sp -8
-	sw s0 0(sp)
-	sw ra 4(sp)
-	addi a0 a0 4
-	jal accumulatorone
-	lw t1 0(sp)
-	lw ra 4(sp)
-	addi sp sp 8
-	add a0 a0 t1
-	jr ra
+    lw t0, 0(a0)       # Load the value from memory into t0 (assuming s0 is being used as t0 in the original code)
+    beq t0, x0, Endone # Check if the loaded value is zero
+    addi sp, sp, -8    # Allocate space on the stack
+    sw t0, 0(sp)       # Save t0 onto the stack
+    sw ra, 4(sp)       # Save return address onto the stack
+    addi a0, a0, 4     # Increment the argument pointer
+    jal accumulatorone # Recursive call
+    lw t1, 0(sp)       # Restore t0 from the stack
+    lw ra, 4(sp)       # Restore return address from the stack
+    addi sp, sp, 8     # Deallocate stack space
+    add a0, a0, t1     # Accumulate the result
+    jr ra              # Return to the calling function
+
 Endone:
-	li a0 0
-	jr ra
+    li a0, 0           # Load return value 0
+    jr ra              # Return
 
 accumulatortwo:
 	addi sp sp 4
@@ -71,15 +72,21 @@ Epiloguethree:
 	jr ra
 
 accumulatorfour:
-	lw t1 0(a0)
-	beq t1 x0 Endfour
-	add t2 t2 t1
-	addi a0 a0 4
-	j accumulatorfour
+    li t2, 0          # Initialize t2 to 0
+    addi sp sp -8
+    sw ra 4(sp)
+Loopfour:
+    lw t1, 0(a0)      # Load value from memory into t1
+    beq t1, x0, Endfour # Check if t1 is zero, if so, exit loop
+    add t2, t2, t1    # Accumulate t1 into t2
+    addi a0, a0, 4    # Increment memory address
+    j Loopfour # Jump back to the beginning of the loop
 Endfour:
-	mv a0 t2
-	jr ra
-
+    mv a0, t2         # Move the accumulated value to a0
+    lw ra 4(sp)
+    addi sp sp 8
+    jr ra             # Jump back to the return address
+ 
 accumulatorfive:
 	addi sp sp -8
 	sw s0 0(sp)

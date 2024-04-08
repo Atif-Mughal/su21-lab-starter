@@ -76,9 +76,25 @@ main:
 # a1 is the address of the "output" array (defined above).
 # Think: why might having a1 be useful?
 f:
-    # YOUR CODE GOES HERE!
+    # Load the input value (assumed to be in a0)
+    # Mask the input to get the index for the lookup table
+    addi a0, a0, 3
+    andi a0, a0, 0x7
 
-    jr ra               # Always remember to jr ra after your function!
+    # Load the address of the lookup table
+    la a1, output
+
+    # Calculate the offset (4 bytes per entry)
+    slli a0, a0, 2
+
+    # Add the offset to the base address
+    add a1, a1, a0
+
+    # Load the result from the table
+    lw a0, 0(a1)
+
+    # Return the result
+    ret
 
 print_int:
     mv a1, a0

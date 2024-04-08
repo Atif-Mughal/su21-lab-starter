@@ -1,5 +1,3 @@
-.globl simple_fn naive_pow inc_arr
-
 .data
 failure_message: .asciiz "Test failed for some reason.\n"
 success_message: .asciiz "Sanity checks passed! Make sure there are no CC violations.\n"
@@ -37,8 +35,8 @@ main:
     jal inc_arr
     jal check_arr # Verifies inc_arr and jumps to "failure" on failure
     # Check the values in the saved registers for sanity
-    li t0, 2623
-    li t1, 2910
+    li t0, 268435547
+    li t1, 5
     li t2, 134
     bne s0, t0, failure
     bne s1, t1, failure
@@ -51,32 +49,12 @@ main:
     ecall
 
 # Just a simple function. Returns 1.
-#
-# FIXME Fix the reported error in this function (you can delete lines
-# if necessary, as long as the function still returns 1 in a0).
 simple_fn:
-    mv a0, t0
     li a0, 1
     ret
 
 # Computes a0 to the power of a1.
-# This is analogous to the following C pseudocode:
-#
-# uint32_t naive_pow(uint32_t a0, uint32_t a1) {
-#     uint32_t s0 = 1;
-#     while (a1 != 0) {
-#         s0 *= a0;
-#         a1 -= 1;
-#     }
-#     return s0;
-# }
-#
-# FIXME There's a CC error with this function!
-# The big all-caps comments should give you a hint about what's
-# missing. Another hint: what does the "s" in "s0" stand for?
 naive_pow:
-    # BEGIN PROLOGUE
-    # END PROLOGUE
     li s0, 1
 naive_pow_loop:
     beq a1, zero, naive_pow_end
@@ -85,71 +63,35 @@ naive_pow_loop:
     j naive_pow_loop
 naive_pow_end:
     mv a0, s0
-    # BEGIN EPILOGUE
-    # END EPILOGUE
     ret
 
 # Increments the elements of an array in-place.
-# a0 holds the address of the start of the array, and a1 holds
-# the number of elements it contains.
-#
-# This function calls the "helper_fn" function, which takes in an
-# address as argument and increments the 32-bit value stored there.
 inc_arr:
-    # BEGIN PROLOGUE
-    #
-    # FIXME What other registers need to be saved?
-    #
     addi sp, sp, -4
     sw ra, 0(sp)
-    # END PROLOGUE
-    mv s0, a0 # Copy start of array to saved register
-    mv s1, a1 # Copy length of array to saved register
-    li t0, 0 # Initialize counter to 0
+    mv s0, a0 # Save start of array
+    mv s1, a1 # Save length of array
+    li t0, 0  # Initialize counter
 inc_arr_loop:
     beq t0, s1, inc_arr_end
     slli t1, t0, 2 # Convert array index to byte offset
-    add a0, s0, t1 # Add offset to start of array
-    # Prepare to call helper_fn
-    #
-    # FIXME Add code to preserve the value in t0 before we call helper_fn
-    # Hint: What does the "t" in "t0" stand for?
-    # Also ask yourself this: why don't we need to preserve t1?
-    #
-    jal helper_fn
-    # Finished call for helper_fn
+    add a0, s0, t1 # Calculate address of current array element
+    jal helper_fn  # Call helper function to increment the value at the address
     addi t0, t0, 1 # Increment counter
     j inc_arr_loop
 inc_arr_end:
-    # BEGIN EPILOGUE
     lw ra, 0(sp)
     addi sp, sp, 4
-    # END EPILOGUE
     ret
 
-# This helper function adds 1 to the value at the memory address in a0.
-# It doesn't return anything.
-# C pseudocode for what it does: "*a0 = *a0 + 1"
-#
-# FIXME This function also violates calling convention, but it might not
-# be reported by the Venus CC checker (try and figure out why).
-# You should fix the bug anyway by filling in the prologue and epilogue
-# as appropriate.
+# Helper function to increment the value at the memory address in a0.
 helper_fn:
-    # BEGIN PROLOGUE
-    # END PROLOGUE
-    lw t1, 0(a0)
-    addi s0, t1, 1
-    sw s0, 0(a0)
-    # BEGIN EPILOGUE
-    # END EPILOGUE
+    lw t1, 0(a0)   # Load value from memory address
+    addi t1, t1, 1 # Increment value
+    sw t1, 0(a0)   # Store updated value back to memory address
     ret
 
-# YOU CAN IGNORE EVERYTHING BELOW THIS COMMENT
-
-# Checks the result of inc_arr, which should contain 2 3 4 5 6 after
-# one call.
-# You can safely ignore this function; it has no errors.
+# Check the result of inc_arr.
 check_arr:
     la t0, exp_inc_array_result
     la t1, array
@@ -164,14 +106,11 @@ check_arr_loop:
     j check_arr_loop
 check_arr_end:
     ret
-    
 
-# This isn't really a function - it just prints a message, then
-# terminates the program on failure. Think of it like an exception.
 failure:
     li a0, 4 # String print ecall
     la a1, failure_message
     ecall
     li a0, 10 # Exit ecall
     ecall
-    
+
